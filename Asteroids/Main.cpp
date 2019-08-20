@@ -14,5 +14,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	systemInstance->Run();
 	systemInstance->Terminate();
 
+	delete systemInstance;
+
 	return 0;
 }

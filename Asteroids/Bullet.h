@@ -13,8 +13,8 @@ enum Owner
 class Bullet : public GameEntity
 {
 public:
-	Bullet(Owner owner, const XMVECTOR& position,
-		const XMVECTOR& direction, const float life = 5.f);
+	Bullet(Owner owner, const D3DXVECTOR3 &position,
+		const D3DXVECTOR3 &direction, const float life = 5.f);
 
 	Owner GetOwner() const;
 
@@ -22,11 +22,11 @@ public:
 	void Render(Graphics *graphics) const;
 
 private:
-
 	Owner owner_;
-	XMFLOAT3 velocity_;
+	D3DXVECTOR3 velocity_;
 	float lifeTime_;
 	std::clock_t startTime_;
+
 };
 
 #endif // BULLET_H_INCLUDED

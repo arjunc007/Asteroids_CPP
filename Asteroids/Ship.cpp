@@ -1,21 +1,23 @@
 #include "Ship.h"
 #include "Graphics.h"
 #include "Maths.h"
-#include "ImmediateMode.h"
-#include "ImmediateModeVertex.h"
 #include "Random.h"
 #include <algorithm>
 
 Ship::Ship() :
 	accelerationControl_(0.0f),
 	rotationControl_(0.0f),
-	velocity_(XMFLOAT3(0.0f, 0.0f, 0.0f)),
-	forward_(XMFLOAT3(0.0f, 1.0f, 0.0f)),
+	velocity_(D3DXVECTOR3(0.0f, 0.0f, 0.0f)),
+	forward_(D3DXVECTOR3(0.0f, 1.0f, 0.0f)),
 	rotation_(0.0f),
-	color_(XMVectorSet(1.f, 1.f, 1.f, 1.f)),
+	color_(0xffffffff),
 	coolDown_(0.f),
 	lastShotTime_(std::clock()),
 	shotReady_(false)//**TODO: Candidate for crash
+{
+}
+
+Ship::~Ship()
 {
 }
 
@@ -28,9 +30,9 @@ void Ship::SetControlInput(float acceleration,
 
 void Ship::Update(System *system)
 {
-	if (!shotReady_)
+	if(!shotReady_)
 	{
-		if ((static_cast<double>(std::clock()) - lastShotTime_) / static_cast<double>(CLOCKS_PER_SEC) > coolDown_)
+		if((std::clock() - lastShotTime_)/ static_cast<double>(CLOCKS_PER_SEC) > coolDown_)
 		{
 			shotReady_ = true;
 		}
@@ -43,69 +45,84 @@ void Ship::Update(System *system)
 	rotation_ = Maths::WrapModulo(rotation_ + rotationControl_ * RATE_OF_ROTATION,
 		Maths::TWO_PI);
 
-	XMMATRIX rotationMatrix = XMMatrixRotationZ(rotation_);
-	XMVECTOR newForward = XMVector3TransformNormal(XMVectorSet(0.f, 1.0f, 0.0f, 0.0f), rotationMatrix);
-	newForward = XMVector3Normalize(newForward);
-	XMStoreFloat3(&forward_, newForward);
+	D3DXMATRIX rotationMatrix;
+	D3DXMatrixRotationZ(&rotationMatrix, rotation_);
+	D3DXVec3TransformNormal(&forward_, &D3DXVECTOR3(0.0f, 1.0f, 0.0f),
+		&rotationMatrix);
+	D3DXVec3Normalize(&forward_, &forward_);
 
-	XMVECTOR idealVelocity = XMVectorScale(XMLoadFloat3(&forward_), accelerationControl_ * MAX_SPEED);
-	XMVECTOR newVelocity = XMVectorLerp(XMLoadFloat3(&velocity_), idealVelocity, VELOCITY_TWEEN);
-	XMStoreFloat3(&velocity_, newVelocity);
+	D3DXVECTOR3 idealVelocity;
+	D3DXVec3Scale(&idealVelocity, &forward_, accelerationControl_ * MAX_SPEED);
+	D3DXVec3Lerp(&velocity_, &velocity_, &idealVelocity, VELOCITY_TWEEN);
 
-	XMVECTOR position = GetPosition();
-	position = XMVectorAdd(position, XMLoadFloat3(&velocity_));
-	SetPosition(position);
+	D3DXVECTOR3 newPosition = GetPosition();
+	D3DXVec3Add(&newPosition, &newPosition, &velocity_);
+	SetPosition(newPosition);
 }
 
 void Ship::Render(Graphics *graphics) const
 {
-	ImmediateModeVertex axis[8] =
+	struct DummyVert
 	{
-		{0.0f, -5.0f, 0.0f, 0xffffffff}, {0.0f, 10.0f, 0.0f, 0xffffffff},
-		{-5.0f, 0.0f, 0.0f, 0xffffffff}, {5.0f, 0.0f, 0.0f, 0xffffffff},
-		{0.0f, 10.0f, 0.0f, 0xffffffff}, {-5.0f, 5.0f, 0.0f, 0xffffffff},
-		{0.0f, 10.0f, 0.0f, 0xffffffff}, {5.0f, 5.0f, 0.0f, 0xffffffff},
+		float x, y, z;
+		D3DCOLOR diffuse;
 	};
 
-	XMMATRIX rotationMatrix = XMMatrixRotationZ(rotation_);
+	DummyVert axis[8] =
+	{
+		{0.0f, -5.0f, 0.0f, color_}, {0.0f, 10.0f, 0.0f, color_},
+		{-5.0f, 0.0f, 0.0f, color_}, {5.0f, 0.0f, 0.0f, color_},
+		{0.0f, 10.0f, 0.0f, color_}, {-5.0f, 5.0f, 0.0f, color_},
+		{0.0f, 10.0f, 0.0f, color_}, {5.0f, 5.0f, 0.0f, color_},
+	};
 
-	XMVECTOR position = GetPosition();
-	XMMATRIX translationMatrix = XMMatrixTranslation(
-		XMVectorGetX(position),
-		XMVectorGetY(position),
-		XMVectorGetZ(position));
+	D3DXMATRIX rotationMatrix;
+	D3DXMatrixRotationZ(&rotationMatrix, rotation_);
 
-	XMMATRIX shipTransform = rotationMatrix * translationMatrix;
+	D3DXVECTOR3 position = GetPosition();
+	D3DXMATRIX translationMatrix;
+	D3DXMatrixTranslation(&translationMatrix,
+		position.x,
+		position.y,
+		position.z);
 
-	ImmediateMode *immediateGraphics = graphics->GetImmediateMode();
+	D3DXMATRIX shipTransform = rotationMatrix * translationMatrix;
 
-	immediateGraphics->SetModelMatrix(shipTransform);
-	immediateGraphics->Draw(D3D11_PRIMITIVE_TOPOLOGY_LINELIST,
+	D3DXMATRIX identityMatrix;
+	D3DXMatrixIdentity(&identityMatrix);
+
+	DWORD dummyFvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+	graphics->SetVertexFormat(dummyFvf);
+	graphics->DisableLighting();
+	graphics->SetModelMatrix(&shipTransform);
+	graphics->DrawImmediate(D3DPT_LINELIST,
+		4,
 		&axis[0],
-		8);
-	immediateGraphics->SetModelMatrix(XMMatrixIdentity());
+		sizeof(axis[0]));
+	graphics->SetModelMatrix(&identityMatrix);
+	graphics->EnableLighting();
 
 	//If velocity not zero, draw exhaust particles
-	if (accelerationControl_)
+	if(accelerationControl_)
 	{
 		const int numParticles = 25;
-		ImmediateModeVertex exhaust[numParticles];
+		DummyVert exhaust[numParticles];
 
 		//Pick points inside triangle from below ship A(0, -5), B(-10, -30), C(10, -30)
-		XMFLOAT2 v1(-10 - 0, -30 - (-5));	//Vector from top vertex to bottom left(B - A)
-		XMFLOAT2 v2(10 - 0, -30 - (-5));	//(C - A)
+		D3DXVECTOR2 v1(-10-0, -30 - (-5));	//Vector from top vertex to bottom left(B - A)
+		D3DXVECTOR2 v2(10-0, -30 - (-5));	//(C - A)
 
-		uint32_t baseColor(0xff3399FF); //Default color for exhaust 
+		D3DXCOLOR baseColor(0xff3399FF); //Default color for exhaust 
 
 		//Generate points
-		for (int i = 0; i < numParticles; i++)
+		for(int i = 0; i < numParticles; i++)
 		{
 			//Generate points in quad
 			exhaust[i].x = Random::GetFloat(1.f) * v1.x + Random::GetFloat(1.f) * v2.x;
 			exhaust[i].y = Random::GetFloat(1.f) * v1.y + Random::GetFloat(1.f) * v2.y;
 
 			//If points below y=-15, Bring into exhaust triangle
-			if (exhaust[i].y < -30.f)
+			if(exhaust[i].y < -30.f)
 			{
 				exhaust[i].y += 25.f;
 			}
@@ -116,22 +133,27 @@ void Ship::Render(Graphics *graphics) const
 			exhaust[i].diffuse = baseColor * (((exhaust[i].y - (-30)) / 25));
 		}
 
-		immediateGraphics->SetModelMatrix(shipTransform);
-		immediateGraphics->Draw(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
-			&exhaust[0],
-			numParticles);
-		immediateGraphics->SetModelMatrix(XMMatrixIdentity());
+		graphics->SetPointSize(1.5f);
+		graphics->SetVertexFormat(dummyFvf);
+		graphics->DisableLighting();
+		graphics->SetModelMatrix(&shipTransform);
+		graphics->DrawImmediate(D3DPT_POINTLIST,
+			numParticles,
+			exhaust,
+			sizeof(exhaust[0]));
+		graphics->SetModelMatrix(&identityMatrix);
+		graphics->EnableLighting();
 	}
 }
 
-XMVECTOR Ship::GetForwardVector() const
+D3DXVECTOR3 Ship::GetForwardVector() const
 {
-	return XMLoadFloat3(&forward_);
+	return forward_;
 }
 
-XMVECTOR Ship::GetVelocity() const
+D3DXVECTOR3 Ship::GetVelocity() const
 {
-	return XMLoadFloat3(&velocity_);
+	return velocity_;
 }
 
 bool Ship::ReadyToShoot() const
@@ -150,7 +172,7 @@ void Ship::DisableShooting()
 	lastShotTime_ = std::clock();
 }
 
-void Ship::SetColor(const XMVECTOR& color)
+void Ship::SetColor(const D3DXCOLOR& color)
 {
 	color_ = color;
 }
@@ -160,9 +182,12 @@ void Ship::Reset()
 	accelerationControl_ = 0.0f;
 	rotationControl_ = 0.0f;
 
-	velocity_ = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	forward_ = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	velocity_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	forward_ = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 	rotation_ = 0.0f;
 
-	SetPosition(XMVectorZero());
+	SetPosition(D3DXVECTOR3(0.0f, 0.0f, 0.0f));
+
+	lastShotTime_ = std::clock();
+	shotReady_ = false;
 }

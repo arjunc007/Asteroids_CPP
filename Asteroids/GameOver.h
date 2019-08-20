@@ -3,6 +3,8 @@
 
 #include "GameState.h"
 
+class Font;
+
 class GameOver : public GameState
 {
 public:
@@ -15,6 +17,7 @@ public:
 
 private:
 	int delay_;
+	Font *font_;
 };
 
 #endif // GAMEOVER_H_INCLUDE

@@ -6,20 +6,20 @@
 class Asteroid : public GameEntity
 {
 public:
-	Asteroid(XMVECTOR position,
-		XMVECTOR velocity,
+	Asteroid(const D3DXVECTOR3 &position,
+		const D3DXVECTOR3 &velocity,
 		int size);
 
 	void Update(System *system);
 	void Render(Graphics *graphics) const;
 
-	XMVECTOR GetVelocity() const;
+	D3DXVECTOR3 GetVelocity() const;
 	int GetSize() const;
 
 private:
 
-	XMFLOAT3 velocity_;
-	XMFLOAT3 axis_;
+	D3DXVECTOR3 velocity_;
+	D3DXVECTOR3 axis_;
 	float angle_;
 	float angularSpeed_;
 	int size_;

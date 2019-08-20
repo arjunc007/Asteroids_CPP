@@ -2,60 +2,54 @@
 #define GRAPHICS_H_INCLUDED
 
 #include "AssetManager.h"
-#include <d3d11.h>
-#include <DirectXMath.h>
-
-using namespace DirectX;
-
-class ResourceLoader;
-class ImmediateMode;
-class FontEngine;
+#include "Font.h"
+#include <d3d9.h>
+#include <d3dx9math.h>
+#include <string>
+#include <map>
 
 class Graphics
 {
 public:
-	static Graphics *CreateDevice(HWND window, ResourceLoader *binaryResources);
+	static Graphics *CreateDevice(HWND window);
 	static void DestroyDevice(Graphics *device);
 
 	void BeginFrame();
 	void EndFrame();
 
-	void ClearFrame(float r, float g, float b, float a);
+	Font *CreateXFont(const std::string &fontName, int height) const;
+	void DestroyXFont(Font *font) const;
 
-	ImmediateMode *GetImmediateMode() const;
-	FontEngine *GetFontEngine() const;
+	void ClearFrame(D3DCOLOR colour);
+	void SetModelMatrix(const D3DXMATRIX *modelMatrix);
+	void SetViewMatrix(const D3DXMATRIX *viewMatrix);
+	void SetProjectionMatrix(const D3DXMATRIX *projectionMatrix);
+
+	void SetVertexFormat(DWORD fvf);
+	void DrawImmediate(D3DPRIMITIVETYPE primType,
+		unsigned int primCount,
+		const void *vertexBuffer,
+		unsigned int vertexStride);
+
+	void SetPointSize(float size);
+
+	void DisableLighting();
+	void EnableLighting();
 
 private:
-
-	struct InitialisationParams
-	{
-		IDXGISwapChain * dxgiSwapChain;
-		ID3D11Device *d3dDevice;
-		ID3D11DeviceContext *d3dDeviceContext;
-		ID3D11RenderTargetView *d3dRenderTargetView;
-	};
-
-	Graphics(const InitialisationParams &initParams);
+	Graphics(IDirect3D9 *d3d, IDirect3DDevice9 *d3dDevice);
 	~Graphics();
 
 	Graphics(const Graphics &);
 	void operator=(const Graphics &);
 
-	bool CreateResources(ResourceLoader *binaryResources);
-	bool CreateSpriteFontResources(ResourceLoader *binaryResources);
-	void DestroyResources();
-	void DestroySpriteFontResources();
+	IDirect3D9 *d3d_;
+	IDirect3DDevice9 *d3dDevice_;
+	D3DVIEWPORT9 defaultViewport_;
 
-	IDXGISwapChain *dxgiSwapChain_;
-
-	ID3D11Device *d3dDevice_;
-	ID3D11DeviceContext *d3dDeviceContext_;
-	ID3D11RenderTargetView *d3dRenderTargetView_;
-
-	D3D11_VIEWPORT defaultViewport_;
-
-	ImmediateMode *immediateMode_;
-	FontEngine *fontEngine_;
+	D3DXMATRIX modelMatrix_;
+	D3DXMATRIX viewMatrix_;
+	D3DXMATRIX projectionMatrix_;
 };
 
 #endif GRAPHICS_H_INCLUDED

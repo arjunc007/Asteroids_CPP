@@ -1,9 +1,7 @@
 #ifndef COLLIDER_H_INCLUDED
 #define COLLIDER_H_INCLUDED
 
-#include <DirectXMath.h>
-
-using namespace DirectX;
+#include <d3dx9math.h>
 
 class GameEntity;
 
@@ -11,7 +9,7 @@ class Collider
 {
 	friend class Collision;
 private:
-	XMFLOAT3 position;
+	D3DXVECTOR3 position;
 	float radius;
 	GameEntity *entity;
 	bool enabled;

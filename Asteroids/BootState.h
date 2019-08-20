@@ -5,6 +5,7 @@
 #include <list>
 #include <string>
 
+class Font;
 class AssetLoader;
 class Graphics;
 
@@ -46,6 +47,7 @@ private:
 
 	State state_;
 	StringList strings_;
+	Font *font_;
 
 	int fakeDelay_;
 };

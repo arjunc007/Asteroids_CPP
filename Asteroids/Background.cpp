@@ -1,7 +1,6 @@
 #include "Background.h"
 #include "System.h"
 #include "Graphics.h"
-#include "ImmediateMode.h"
 #include "Random.h"
 
 Background::Background(float width, float height)
@@ -23,9 +22,15 @@ void Background::Update(System *systems)
 
 void Background::Render(Graphics *graphics) const
 {
-	graphics->ClearFrame(0.0f, 0.0f, 0.0f, 0.0f);
+	graphics->ClearFrame(0x00000000);
 
-	graphics->GetImmediateMode()->Draw(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
+	DWORD starFvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+	graphics->SetVertexFormat(starFvf);
+	graphics->SetPointSize(2.0f);
+	graphics->DisableLighting();
+	graphics->DrawImmediate(D3DPT_POINTLIST,
+		NUM_STARS,
 		&stars_[0],
-		NUM_STARS);
+		sizeof(stars_[0]));
+	graphics->EnableLighting();
 }

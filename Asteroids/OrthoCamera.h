@@ -1,9 +1,7 @@
 #ifndef ORTHOCAMERA_H_INCLUDED
 #define ORTHOCAMERA_H_INCLUDED
 
-#include <DirectXMath.h>
-
-using namespace DirectX;
+#include <d3dx9math.h>
 
 class Graphics;
 
@@ -12,7 +10,7 @@ class OrthoCamera
 public:
 	OrthoCamera();
 
-	void SetPosition(const XMFLOAT3 &position);
+	void SetPosition(const D3DXVECTOR3 &position);
 	void SetFrustum(float width,
 		float height,
 		float nearZ,
@@ -22,9 +20,9 @@ public:
 
 private:
 
-	XMFLOAT3 position_;
-	XMFLOAT2 widthHeight_;
-	XMFLOAT2 nearFarZ_;
+	D3DXVECTOR3 position_;
+	D3DXVECTOR2 widthHeight_;
+	D3DXVECTOR2 nearFarZ_;
 
 };
 

@@ -2,26 +2,16 @@
 #include "Collision.h"
 
 GameEntity::GameEntity() :
-	isAlive_(true),
-	position_(XMFLOAT3(0.0f, 0.0f, 0.0f)),
+	position_(D3DXVECTOR3(0.0f, 0.0f, 0.0f)),
 	collisionSystem_(0),
-	collider_(0)
+	collider_(0),
+	isAlive_(true)
 {
 }
 
 GameEntity::~GameEntity()
 {
 	DestroyCollider();
-}
-
-bool GameEntity::IsAlive() const
-{
-	return isAlive_;
-}
-
-void GameEntity::SetAlive(bool b)
-{
-	isAlive_ = b;
 }
 
 void GameEntity::Update(System *system)
@@ -32,14 +22,14 @@ void GameEntity::Render(Graphics *graphics) const
 {
 }
 
-XMVECTOR GameEntity::GetPosition() const
+D3DXVECTOR3 GameEntity::GetPosition() const
 {
-	return XMLoadFloat3(&position_);
+	return position_;
 }
 
-void GameEntity::SetPosition(XMVECTOR position)
+void GameEntity::SetPosition(const D3DXVECTOR3 &position)
 {
-	XMStoreFloat3(&position_, position);
+	position_ = position;
 	if (HasValidCollider())
 	{
 		collisionSystem_->UpdateColliderPosition(collider_, position_);
@@ -75,4 +65,14 @@ void GameEntity::DestroyCollider()
 
 	collisionSystem_ = 0;
 	collider_ = 0;
+}
+
+bool GameEntity::IsAlive() const
+{
+	return isAlive_;
+}
+	
+void GameEntity::SetAlive(bool b)
+{
+	isAlive_ = b;
 }

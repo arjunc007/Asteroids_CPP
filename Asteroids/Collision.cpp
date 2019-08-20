@@ -21,7 +21,7 @@ Collider *Collision::CreateCollider(GameEntity *entity)
 {
 	Collider *collider = new Collider();
 
-	collider->position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	collider->position = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	collider->radius = 0.0f;
 	collider->entity = entity;
 	collider->enabled = true;
@@ -36,7 +36,7 @@ void Collision::DestroyCollider(Collider *collider)
 	delete collider;
 }
 
-void Collision::UpdateColliderPosition(Collider *collider, const XMFLOAT3 &position)
+void Collision::UpdateColliderPosition(Collider *collider, const D3DXVECTOR3 &position)
 {
 	collider->position = position;
 }
@@ -82,8 +82,9 @@ bool Collision::CollisionTest(Collider *a, Collider *b)
 	if (b->enabled == false)
 		return false;
 
-	XMVECTOR diff = XMVectorSubtract(XMLoadFloat3(&a->position), XMLoadFloat3(&b->position));
-	float distance = XMVectorGetX(XMVector3Length(diff));
+	D3DXVECTOR3 diff;
+	D3DXVec3Subtract(&diff, &a->position, &b->position);
+	float distance = D3DXVec3Length(&diff);
 	if (distance < (a->radius + b->radius))
 	{
 		return true;

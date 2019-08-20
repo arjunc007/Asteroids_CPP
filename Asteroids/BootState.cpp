@@ -2,11 +2,12 @@
 #include "GameState.h"
 #include "System.h"
 #include "Graphics.h"
-#include "FontEngine.h"
+#include "Font.h"
 #include "AssetLoader.h"
 
 BootState::BootState() :
-	state_(STATE_BEGIN)
+	state_(STATE_BEGIN),
+	font_(0)
 {
 }
 
@@ -16,6 +17,7 @@ BootState::~BootState()
 
 void BootState::OnActivate(System *system, StateArgumentMap &args)
 {
+	font_ = system->GetGraphics()->CreateXFont("Arial", 16);
 	strings_.push_back("LOADING:");
 	fakeDelay_ = 10;
 }
@@ -35,19 +37,21 @@ void BootState::OnUpdate(System *system)
 
 void BootState::OnRender(System *system)
 {
-	system->GetGraphics()->ClearFrame(0.0f, 0.0f, 0.0f, 0.0f);
+	system->GetGraphics()->ClearFrame(0x00000000);
 
 	int currentLineY = 5;
 	for (StringList::iterator stringIt = strings_.begin(), end = strings_.end();
 		stringIt != end;
 		++stringIt)
 	{
-		currentLineY += system->GetGraphics()->GetFontEngine()->DrawText(*stringIt, 5, currentLineY, 0xffffffff, FontEngine::FONT_TYPE_SMALL);
+		currentLineY += font_->DrawText(*stringIt, 5, currentLineY, 0xff00ffff);
 	}
 }
 
 void BootState::OnDeactivate(System *system)
 {
+	system->GetGraphics()->DestroyXFont(font_);
+	font_ = 0;
 }
 
 void BootState::UpdateBegin(System *system)

@@ -1,18 +1,15 @@
 #ifndef GAME_H_INCLUDED
 #define GAME_H_INCLUDED
 
-#include <DirectXMath.h>
+#include <d3dx9math.h>
 #include <list>
 #include <ctime>
 
 #include "Bullet.h"
 
-using namespace DirectX;
-
 class OrthoCamera;
 class Background;
 class Ship;
-class Bullet;
 class Asteroid;
 class Explosion;
 class Collision;
@@ -26,9 +23,9 @@ public:
 	struct Score
 	{
 		int value;
-		XMFLOAT2 pos;
+		D3DXVECTOR2 pos;
 		float life;
-		XMVECTOR color;
+		D3DXCOLOR color;
 	};
 
 	Game();
@@ -49,6 +46,7 @@ public:
 	void ResetGame();
 
 private:
+
 	Game(const Game &);
 	void operator=(const Game &);
 
@@ -58,39 +56,39 @@ private:
 
 	void SpawnPlayer();
 	void DeletePlayer();
-	void UpdatePlayer(System* system);
 
 	void SpawnEnemy();
 	void SpawnUFOEnemy(int level);
 	void DeleteEnemy();
-	void UpdateEnemy(System* system);
+	void UpdateEnemy(System *system);
 
+	void UpdatePlayer(System *system);
 	void UpdateAsteroids(System *system);
-	void UpdateBullets(System* system);
+	void UpdateBullets(System *system);
 	void UpdateExplosions(System* system);
 	void WrapEntity(GameEntity *entity) const;
-
+	
 	void DeleteAllBullets();
 	void DeleteAllAsteroids();
 	void DeleteAllExplosions();
 
-	void SpawnBullet(Owner owner, const XMVECTOR &position,
-		const XMVECTOR &direction, const float life);
+	void SpawnBullet(Owner owner, const D3DXVECTOR3 &position,
+		const D3DXVECTOR3 &direction, const float life);
 	bool IsBullet(GameEntity* entity) const; 
 	void DeleteBullet(Bullet* bullet);
 
 	void SpawnAsteroids(int numAsteroids);
-	void SpawnAsteroidAt(XMVECTOR position, int size);
+	void SpawnAsteroidAt(const D3DXVECTOR3 &position, int size);
 	bool IsAsteroid(GameEntity *entity) const;
 	void AsteroidHit(Asteroid *asteroid);
 	void DeleteAsteroid(Asteroid *asteroid);
 
-	void SpawnExplosionAt(const XMVECTOR& position, int size);
+	void SpawnExplosionAt(const D3DXVECTOR3& position, int size);
 	void DeleteExplosion(Explosion* explosion);
 
 	void UpdateCollisions();
 
-	void ShowScore(const int score, const XMVECTOR& position) const;
+	void ShowScore(const int score, const D3DXVECTOR3& position) const;
 
 	OrthoCamera *camera_;
 

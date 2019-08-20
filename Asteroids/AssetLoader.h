@@ -14,7 +14,7 @@ public:
 	struct Asset
 	{
 		void *data;
-		uint32_t size;
+		size_t size;
 		std::string groupId;
 	};
 

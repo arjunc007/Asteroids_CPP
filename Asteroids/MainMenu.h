@@ -3,6 +3,8 @@
 
 #include "GameState.h"
 
+class Font;
+
 class MainMenu : public GameState
 {
 public:
@@ -15,6 +17,9 @@ public:
 	void OnDeactivate(System *system);
 
 private:
+
+	Font *titleFont_;
+	Font *optionsFont_;
 
 };
 

@@ -1,17 +1,17 @@
 #include "Bullet.h"
 #include "Graphics.h"
-#include "ImmediateMode.h"
-#include "ImmediateModeVertex.h"
 
-Bullet::Bullet(Owner owner, const XMVECTOR& position,
-	const XMVECTOR& direction, const float life) : owner_(owner),
+Bullet::Bullet(Owner owner, const D3DXVECTOR3 &position,
+	const D3DXVECTOR3 &direction, const float life) : owner_(owner), 
 	startTime_(std::clock()),
 	lifeTime_(life)
 {
 	const float BULLET_SPEED = 4.0f;
 
 	SetPosition(position);
-	XMStoreFloat3(&velocity_, XMVector3Normalize(direction) * BULLET_SPEED);
+	D3DXVECTOR3 normalisedDirection;
+	D3DXVec3Normalize(&normalisedDirection, &direction);
+	velocity_ = normalisedDirection * BULLET_SPEED;
 }
 
 Owner Bullet::GetOwner() const
@@ -21,14 +21,14 @@ Owner Bullet::GetOwner() const
 
 void Bullet::Update(System *system)
 {
-	if ((static_cast<double>(std::clock()) - startTime_) / static_cast<double>(CLOCKS_PER_SEC) > lifeTime_)
+	if((std::clock() - startTime_)/ static_cast<double>(CLOCKS_PER_SEC) > lifeTime_)
 	{
 		SetAlive(false);
 		return;
 	}
 
-	XMVECTOR position = GetPosition();
-	position = XMVectorAdd(position, XMLoadFloat3(&velocity_));
+	D3DXVECTOR3 position = GetPosition();
+	D3DXVec3Add(&position, &position, &velocity_);
 	SetPosition(position);
 }
 
@@ -36,34 +36,46 @@ void Bullet::Render(Graphics *graphics) const
 {
 	const float RADIUS = 3.0f;
 
-	int numLines = 4;
-	ImmediateModeVertex square[5] =
+	struct DummyVert
 	{
+		float x, y, z;
+		D3DCOLOR diffuse;
+	};
+
+	int numLines = 4;
+	DummyVert square[5] = {
 		{-RADIUS, -RADIUS, 0.0f, 0xffffffff},
 		{-RADIUS,  RADIUS, 0.0f, 0xffffffff},
 		{ RADIUS,  RADIUS, 0.0f, 0xffffffff},
 		{ RADIUS, -RADIUS, 0.0f, 0xffffffff},
 		{-RADIUS, -RADIUS, 0.0f, 0xffffffff},
 	};
-
-	if (owner_ == Enemy)
+	
+	if(owner_ == Enemy)
 	{
 		numLines = 3;
 		square[2].y = 0.f;
 		square[3] = square[4];
 	}
 
-	XMVECTOR position = GetPosition();
-	XMMATRIX translationMatrix = XMMatrixTranslation(
-		XMVectorGetX(position),
-		XMVectorGetY(position),
-		XMVectorGetZ(position));
+	D3DXVECTOR3 position = GetPosition();
+	D3DXMATRIX translationMatrix;
+	D3DXMatrixTranslation(&translationMatrix,
+		position.x,
+		position.y,
+		position.z);
 
-	ImmediateMode *immediateGraphics = graphics->GetImmediateMode();
+	D3DXMATRIX identityMatrix;
+	D3DXMatrixIdentity(&identityMatrix);
 
-	immediateGraphics->SetModelMatrix(translationMatrix);
-	immediateGraphics->Draw(D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP,
+	DWORD dummyFvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+	graphics->SetVertexFormat(dummyFvf);
+	graphics->DisableLighting();
+	graphics->SetModelMatrix(&translationMatrix);
+	graphics->DrawImmediate(D3DPT_LINESTRIP,
+		numLines,
 		&square[0],
-		numLines == 4 ? 5 : 4);
-	immediateGraphics->SetModelMatrix(XMMatrixIdentity());
+		sizeof(square[0]));
+	graphics->SetModelMatrix(&identityMatrix);
+	graphics->EnableLighting();
 }

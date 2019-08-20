@@ -2,10 +2,12 @@
 #include "System.h"
 #include "Graphics.h"
 #include "Game.h"
-#include "FontEngine.h"
+#include "Font.h"
 #include "Keyboard.h"
 
-MainMenu::MainMenu()
+MainMenu::MainMenu() :
+	titleFont_(0),
+	optionsFont_(0)
 {
 }
 
@@ -15,6 +17,11 @@ MainMenu::~MainMenu()
 
 void MainMenu::OnActivate(System *system, StateArgumentMap &args)
 {
+	if (titleFont_ == 0)
+	{
+		titleFont_ = system->GetGraphics()->CreateXFont("Arial", 48);
+		optionsFont_ = system->GetGraphics()->CreateXFont("Arial", 16);
+	}
 }
 
 void MainMenu::OnUpdate(System *system)
@@ -30,15 +37,15 @@ void MainMenu::OnUpdate(System *system)
 
 void MainMenu::OnRender(System *system)
 {
-	Graphics *graphics = system->GetGraphics();
-	FontEngine *fontEngine = graphics->GetFontEngine();
-
-	system->GetGame()->RenderBackgroundOnly(graphics);
-
-	fontEngine->DrawText("ASTEROIDS", 50, 50, 0xff00ffff, FontEngine::FONT_TYPE_LARGE);
-	fontEngine->DrawText("Press [Space] to Start", 50, 100, 0xffffffff, FontEngine::FONT_TYPE_SMALL);
+	system->GetGame()->RenderBackgroundOnly(system->GetGraphics());
+	titleFont_->DrawText("ASTERIODS", 50, 50, 0xffffff00);
+	optionsFont_->DrawText("Press [Space] to Start", 50, 100, 0xffffff00);
 }
 
 void MainMenu::OnDeactivate(System *system)
 {
+	system->GetGraphics()->DestroyXFont(titleFont_);
+	titleFont_ = 0;
+	system->GetGraphics()->DestroyXFont(optionsFont_);
+	optionsFont_ = 0;
 }

@@ -2,7 +2,6 @@
 #define BACKGROUND_H_INCLUDED
 
 #include "GameEntity.h"
-#include "ImmediateModeVertex.h"
 
 class Background : public GameEntity
 {
@@ -14,9 +13,15 @@ public:
 
 private:
 
+	struct StarVertex
+	{
+		float x, y, z;
+		D3DCOLOR diffuse;
+	};
+
 	enum { NUM_STARS = 256 };
 
-	ImmediateModeVertex stars_[NUM_STARS];
+	StarVertex stars_[NUM_STARS];
 
 };
 

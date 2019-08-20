@@ -1,10 +1,8 @@
 #ifndef COLLISION_H_INCLUDED
 #define COLLISION_H_INCLUDED
 
-#include <DirectXMath.h>
+#include <d3dx9math.h>
 #include <list>
-
-using namespace DirectX;
 
 class GameEntity;
 class Game;
@@ -19,7 +17,7 @@ public:
 	Collider *CreateCollider(GameEntity *entity);
 	void DestroyCollider(Collider *collider);
 
-	void UpdateColliderPosition(Collider *collider, const XMFLOAT3 &position);
+	void UpdateColliderPosition(Collider *collider, const D3DXVECTOR3 &position);
 	void UpdateColliderRadius(Collider *collider, float radius);
 	void EnableCollider(Collider *collider);
 	void DisableCollider(Collider *collider);

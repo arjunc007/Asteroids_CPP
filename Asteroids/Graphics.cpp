@@ -1,187 +1,155 @@
 #include "Graphics.h"
-#include "ResourceLoader.h"
-#include "ImmediateMode.h"
-#include "FontEngine.h"
+#include "Font.h"
 
-Graphics::Graphics(const InitialisationParams &initParams) :
-	dxgiSwapChain_(initParams.dxgiSwapChain),
-	d3dDevice_(initParams.d3dDevice),
-	d3dDeviceContext_(initParams.d3dDeviceContext),
-	d3dRenderTargetView_(initParams.d3dRenderTargetView),
-	immediateMode_(0),
-	fontEngine_(0)
+Graphics::Graphics(IDirect3D9 *d3d, IDirect3DDevice9 *d3dDevice) :
+	d3d_(d3d),
+	d3dDevice_(d3dDevice)
 {
-	defaultViewport_.TopLeftX = 0;
-	defaultViewport_.TopLeftY = 0;
+	defaultViewport_.X = 0;
+	defaultViewport_.Y = 0;
 	defaultViewport_.Width = 800;
 	defaultViewport_.Height = 600;
-	defaultViewport_.MinDepth = 0.0f;
-	defaultViewport_.MaxDepth = 1.0f;
+	defaultViewport_.MinZ = 0.0f;
+	defaultViewport_.MaxZ = 1.0f;
+
+	D3DXMatrixIdentity(&modelMatrix_);
+	D3DXMatrixIdentity(&viewMatrix_);
+	D3DXMatrixIdentity(&projectionMatrix_);
 }
 
 Graphics::~Graphics()
 {
 }
 
-Graphics *Graphics::CreateDevice(HWND window, ResourceLoader *binaryResources)
+Graphics *Graphics::CreateDevice(HWND window)
 {
-	// Create the basic D3D devices
-	DXGI_SWAP_CHAIN_DESC swapChainDesc;
-	ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
-	swapChainDesc.BufferDesc.Width = 800;
-	swapChainDesc.BufferDesc.Height = 600;
-	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapChainDesc.SampleDesc.Count = 1;
-	swapChainDesc.SampleDesc.Quality = 0;
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = 1;
-	swapChainDesc.OutputWindow = window;
-	swapChainDesc.Windowed = TRUE;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-
-	IDXGISwapChain *dxgiSwapChain;
-	ID3D11Device *d3dDevice;
-	ID3D11DeviceContext *d3dDeviceContext;
-
-	const D3D_FEATURE_LEVEL requiredFeatureLevel = D3D_FEATURE_LEVEL_11_0;
-	HRESULT createDevice = D3D11CreateDeviceAndSwapChain(
-		NULL, // Default adapter
-		D3D_DRIVER_TYPE_WARP, // Force a slow path to make sure we're working with a known reference
-		//D3D_DRIVER_TYPE_HARDWARE, // Force a slow path to make sure we're working with a known reference
-		NULL, // Software rasteriser unused
-		D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG,
-		&requiredFeatureLevel,
-		1,
-		D3D11_SDK_VERSION,
-		&swapChainDesc,
-		&dxgiSwapChain,
-		&d3dDevice,
-		NULL, // We only passed one feature level, so it either succeeded or failed
-		&d3dDeviceContext);
-
-	if (FAILED(createDevice))
+	IDirect3D9 *d3d = Direct3DCreate9(D3D_SDK_VERSION);
+	if (d3d == 0)
 	{
 		return 0;
 	}
 
-	ID3D11Resource *backBuffer;
-	HRESULT getBackBuffer = dxgiSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void **>(&backBuffer));
-	if (FAILED(getBackBuffer))
+	D3DPRESENT_PARAMETERS pp;
+	ZeroMemory(&pp, sizeof(pp));
+	pp.BackBufferWidth = 800;
+	pp.BackBufferHeight = 600;
+	pp.BackBufferFormat = D3DFMT_A8R8G8B8;
+	pp.BackBufferCount = 2;
+	pp.MultiSampleType = D3DMULTISAMPLE_NONE;
+	pp.MultiSampleQuality = 0;
+	pp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	pp.hDeviceWindow = window;
+	pp.Windowed = true;
+	pp.EnableAutoDepthStencil = true;
+	pp.AutoDepthStencilFormat = D3DFMT_D24S8;
+	pp.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
+	pp.FullScreen_RefreshRateInHz = 0;
+	pp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+
+	IDirect3DDevice9 *device = 0;
+	HRESULT hr = d3d->CreateDevice(D3DADAPTER_DEFAULT,
+		D3DDEVTYPE_HAL,
+		window,
+		D3DCREATE_HARDWARE_VERTEXPROCESSING,
+		&pp,
+		&device);
+	if (FAILED(hr))
 	{
-		d3dDeviceContext->Release();
-		d3dDevice->Release();
-		dxgiSwapChain->Release();
 		return 0;
 	}
 
-	D3D11_RENDER_TARGET_VIEW_DESC viewDesc;
-	ZeroMemory(&viewDesc, sizeof(viewDesc));
-	viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	viewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	viewDesc.Texture2D.MipSlice = 0;
-
-	ID3D11RenderTargetView *d3dRenderTargetView;
-	HRESULT createRenderTargetView = d3dDevice->CreateRenderTargetView(
-		backBuffer,
-		&viewDesc,
-		&d3dRenderTargetView);
-	backBuffer->Release();
-
-	if (FAILED(createRenderTargetView))
-	{
-		d3dDeviceContext->Release();
-		d3dDevice->Release();
-		dxgiSwapChain->Release();
-		return 0;
-	}
-
-	//  Create our graphics device
-	InitialisationParams gfxParams;
-	gfxParams.dxgiSwapChain = dxgiSwapChain;
-	gfxParams.d3dDevice = d3dDevice;
-	gfxParams.d3dDeviceContext = d3dDeviceContext;
-	gfxParams.d3dRenderTargetView = d3dRenderTargetView;
-
-	Graphics *newDevice = new Graphics(gfxParams);
-
-	bool loadDefaultResources = newDevice->CreateResources(binaryResources);
-	if (loadDefaultResources == false)
-	{
-		DestroyDevice(newDevice);
-		return 0;
-	}
-
-	return newDevice;
+	return new Graphics(d3d, device);
 }
 
 void Graphics::DestroyDevice(Graphics *device)
 {
-	device->DestroyResources();
-
-	device->d3dDeviceContext_->Release();
 	device->d3dDevice_->Release();
-	device->dxgiSwapChain_->Release();
-
+	device->d3d_->Release();
 	delete device;
 }
 
 void Graphics::BeginFrame()
 {
-	static float redFlash = 0.5f;
-	redFlash = fmodf(redFlash + 0.05f, 1.0f);
-	ClearFrame(redFlash, 0.0f, 0.0f, 0.0f);
+	d3dDevice_->BeginScene();
 
-	d3dDeviceContext_->RSSetViewports(1, &defaultViewport_);
+	static unsigned int clearColour = 0;
+	clearColour += 5;
+	ClearFrame(clearColour);
 
-	immediateMode_->BeginFrame();
-	fontEngine_->BeginFrame();
+	d3dDevice_->SetViewport(&defaultViewport_);
 }
 
 void Graphics::EndFrame()
 {
-	d3dDeviceContext_->ClearState();
-
-	immediateMode_->EndFrame();
-	fontEngine_->EndFrame();
-	dxgiSwapChain_->Present(1, 0);
+	d3dDevice_->EndScene();
+	d3dDevice_->Present(0, 0, 0, 0);
 }
 
-void Graphics::ClearFrame(float r, float g, float b, float a)
+Font *Graphics::CreateXFont(const std::string &fontName, int height) const
 {
-	const float rgba[4] = { r, g, b, a };
-	d3dDeviceContext_->ClearRenderTargetView(
-		d3dRenderTargetView_,
-		rgba);
-
-	d3dDeviceContext_->OMSetRenderTargets(1, &d3dRenderTargetView_, NULL);
+	return Font::CreateXFont(fontName, height, d3dDevice_);
 }
 
-ImmediateMode *Graphics::GetImmediateMode() const
+void Graphics::DestroyXFont(Font *font) const
 {
-	return immediateMode_;
+	Font::DestroyXFont(font);
 }
 
-FontEngine *Graphics::GetFontEngine() const
+void Graphics::ClearFrame(D3DCOLOR colour)
 {
-	return fontEngine_;
+	d3dDevice_->Clear(0,
+		0,
+		D3DCLEAR_STENCIL | D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
+		colour,
+		1.0f,
+		0);
 }
 
-bool Graphics::CreateResources(ResourceLoader *binaryResources)
+void Graphics::SetModelMatrix(const D3DXMATRIX *modelMatrix)
 {
-	immediateMode_ = ImmediateMode::CreateImmediateMode(binaryResources, d3dDevice_, d3dDeviceContext_);
-	fontEngine_ = FontEngine::CreateFontEngine(binaryResources, d3dDevice_, d3dDeviceContext_);
-	if ((immediateMode_ == 0) ||
-		(fontEngine_ == 0))
-	{
-		DestroyResources();
-		return false;
-	}
-
-	return true;
+	modelMatrix_ = *modelMatrix;
+	d3dDevice_->SetTransform(D3DTS_WORLD, &modelMatrix_);
 }
 
-void Graphics::DestroyResources()
+void Graphics::SetViewMatrix(const D3DXMATRIX *viewMatrix)
 {
-	FontEngine::DestroyFontEngine(fontEngine_);
-	ImmediateMode::DestroyImmediateMode(immediateMode_);
+	viewMatrix_ = *viewMatrix;
+	d3dDevice_->SetTransform(D3DTS_VIEW, &viewMatrix_);
+}
+
+void Graphics::SetProjectionMatrix(const D3DXMATRIX *projectionMatrix)
+{
+	projectionMatrix_ = *projectionMatrix;
+	d3dDevice_->SetTransform(D3DTS_PROJECTION, &projectionMatrix_);
+}
+
+void Graphics::SetVertexFormat(DWORD fvf)
+{
+	d3dDevice_->SetFVF(fvf);
+}
+
+void Graphics::DrawImmediate(D3DPRIMITIVETYPE primType,
+	unsigned int primCount,
+	const void *vertexBuffer,
+	unsigned int vertexStride)
+{
+	d3dDevice_->DrawPrimitiveUP(primType,
+		primCount,
+		vertexBuffer,
+		vertexStride);
+}
+
+void Graphics::SetPointSize(float size)
+{
+	d3dDevice_->SetRenderState(D3DRS_POINTSIZE, reinterpret_cast<DWORD &>(size));
+}
+
+void Graphics::DisableLighting()
+{
+	d3dDevice_->SetRenderState(D3DRS_LIGHTING, FALSE);
+}
+
+void Graphics::EnableLighting()
+{
+	d3dDevice_->SetRenderState(D3DRS_LIGHTING, TRUE);
 }

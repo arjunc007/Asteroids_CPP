@@ -6,17 +6,17 @@
 #include "GameEntity.h"
 
 struct Particle
-{
-	XMFLOAT2 pos;
-	XMFLOAT2 vel;
-	float lifeTime;
-	float time;
-};
+	{
+		D3DXVECTOR2 pos;
+		D3DXVECTOR2 vel;
+		float lifeTime;
+		float time;
+	};
 
 class Explosion : public GameEntity
 {
 public:
-	Explosion(const XMVECTOR& position, int size, float startSpeed = 2.f);
+	Explosion(const D3DXVECTOR3 &position, int size, float startSpeed = 2.f);
 
 	void Update(System* system);
 	void Render(Graphics* graphics) const;

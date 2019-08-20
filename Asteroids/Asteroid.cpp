@@ -2,23 +2,19 @@
 #include "Graphics.h"
 #include "Random.h"
 #include "Maths.h"
-#include "ImmediateMode.h"
-#include "ImmediateModeVertex.h"
 
-Asteroid::Asteroid(XMVECTOR position,
-	XMVECTOR velocity,
+Asteroid::Asteroid(const D3DXVECTOR3 &position,
+	const D3DXVECTOR3 &velocity,
 	int size) :
+	velocity_(velocity),
 	angle_(0.0f),
 	size_(size)
 {
 	SetPosition(position);
-
-	XMStoreFloat3(&velocity_, velocity);
-
 	axis_.x = Random::GetFloat(-1.0f, 1.0f);
 	axis_.y = Random::GetFloat(-1.0f, 1.0f);
 	axis_.z = Random::GetFloat(-1.0f, 1.0f);
-	XMStoreFloat3(&axis_, XMVector3Normalize(XMLoadFloat3(&axis_)));
+	D3DXVec3Normalize(&axis_, &axis_);
 
 	const float MAX_ROTATION = 0.3f;
 	angularSpeed_ = Random::GetFloat(-MAX_ROTATION, MAX_ROTATION);
@@ -26,8 +22,8 @@ Asteroid::Asteroid(XMVECTOR position,
 
 void Asteroid::Update(System *system)
 {
-	XMVECTOR position = GetPosition();
-	position = XMVectorAdd(position, XMLoadFloat3(&velocity_));
+	D3DXVECTOR3 position = GetPosition();
+	D3DXVec3Add(&position, &position, &velocity_);
 	SetPosition(position);
 
 	angle_ = Maths::WrapModulo(angle_ + angularSpeed_, Maths::TWO_PI);
@@ -37,7 +33,13 @@ void Asteroid::Render(Graphics *graphics) const
 {
 	const float RADIUS_MULTIPLIER = 5.0f;
 
-	ImmediateModeVertex square[5] =
+	struct DummyVert
+	{
+		float x, y, z;
+		D3DCOLOR diffuse;
+	};
+
+	DummyVert square[5] =
 	{
 		{-1.0f, -1.0f, 0.0f, 0xffffffff},
 		{-1.0f,  1.0f, 0.0f, 0xffffffff},
@@ -46,38 +48,45 @@ void Asteroid::Render(Graphics *graphics) const
 		{-1.0f, -1.0f, 0.0f, 0xffffffff},
 	};
 
-	XMMATRIX scaleMatrix = XMMatrixScaling(
+	D3DXMATRIX scaleMatrix;
+	D3DXMatrixScaling(&scaleMatrix,
 		size_ * RADIUS_MULTIPLIER,
 		size_ * RADIUS_MULTIPLIER,
 		size_ * RADIUS_MULTIPLIER);
 
-	XMMATRIX rotationMatrix = XMMatrixRotationAxis(
-		XMLoadFloat3(&axis_),
-		angle_);
+	D3DXMATRIX rotationMatrix;
+	D3DXMatrixRotationAxis(&rotationMatrix, &axis_, angle_);
 
-	XMVECTOR position = GetPosition();
-	XMMATRIX translationMatrix = XMMatrixTranslation(
-		XMVectorGetX(position),
-		XMVectorGetY(position),
-		XMVectorGetZ(position));
+	D3DXVECTOR3 position = GetPosition();
+	D3DXMATRIX translationMatrix;
+	D3DXMatrixTranslation(&translationMatrix,
+		position.x,
+		position.y,
+		position.z);
 
-	XMMATRIX asteroidTransform = scaleMatrix *
+	D3DXMATRIX asteroidTransform = scaleMatrix *
 		rotationMatrix *
 		translationMatrix;
 
-	ImmediateMode *immediateGraphics = graphics->GetImmediateMode();
+	D3DXMATRIX identityMatrix;
+	D3DXMatrixIdentity(&identityMatrix);
 
-	immediateGraphics->SetModelMatrix(asteroidTransform);
-	immediateGraphics->Draw(D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP,
+	DWORD dummyFvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+	graphics->SetVertexFormat(dummyFvf);
+	graphics->DisableLighting();
+	graphics->SetModelMatrix(&asteroidTransform);
+	graphics->DrawImmediate(D3DPT_LINESTRIP,
+		4,
 		&square[0],
-		5);
-	immediateGraphics->SetModelMatrix(XMMatrixIdentity());
+		sizeof(square[0]));
+	graphics->SetModelMatrix(&identityMatrix);
+	graphics->EnableLighting();
 
 }
 
-XMVECTOR Asteroid::GetVelocity() const
+D3DXVECTOR3 Asteroid::GetVelocity() const
 {
-	return XMLoadFloat3(&velocity_);
+	return velocity_;
 }
 
 int Asteroid::GetSize() const

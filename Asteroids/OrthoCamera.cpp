@@ -1,6 +1,5 @@
 #include "OrthoCamera.h"
 #include "Graphics.h"
-#include "ImmediateMode.h"
 
 OrthoCamera::OrthoCamera() :
 	position_(0.0f, 0.0f, 0.0f),
@@ -9,7 +8,7 @@ OrthoCamera::OrthoCamera() :
 {
 }
 
-void OrthoCamera::SetPosition(const XMFLOAT3 &position)
+void OrthoCamera::SetPosition(const D3DXVECTOR3 &position)
 {
 	position_ = position;
 }
@@ -19,17 +18,18 @@ void OrthoCamera::SetFrustum(float width,
 	float nearZ,
 	float farZ)
 {
-	widthHeight_ = XMFLOAT2(width, height);
-	nearFarZ_ = XMFLOAT2(nearZ, farZ);
+	widthHeight_ = D3DXVECTOR2(width, height);
+	nearFarZ_ = D3DXVECTOR2(nearZ, farZ);
 }
 
 void OrthoCamera::SetAsView(Graphics *graphics) const
 {
-	XMMATRIX ortho = XMMatrixOrthographicLH(
+	D3DXMATRIX ortho;
+	D3DXMatrixOrthoLH(&ortho,
 		widthHeight_.x,
 		widthHeight_.y,
 		nearFarZ_.x,
 		nearFarZ_.y);
 
-	graphics->GetImmediateMode()->SetProjectionMatrix(ortho);
+	graphics->SetProjectionMatrix(&ortho);
 }

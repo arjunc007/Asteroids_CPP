@@ -1,17 +1,22 @@
 #include "GameOver.h"
 #include "System.h"
 #include "Graphics.h"
-#include "FontEngine.h"
+#include "Font.h"
 #include "Game.h"
 
 GameOver::GameOver() :
-	delay_(0)
+	delay_(0),
+	font_(0)
 {
 }
 
 void GameOver::OnActivate(System *system, StateArgumentMap &args)
 {
 	delay_ = 120;
+	if (font_ == 0)
+	{
+		font_ = system->GetGraphics()->CreateXFont("Arial", 48);
+	}
 }
 
 void GameOver::OnUpdate(System *system)
@@ -24,18 +29,17 @@ void GameOver::OnUpdate(System *system)
 
 void GameOver::OnRender(System *system)
 {
-	Graphics *graphics = system->GetGraphics();
-	FontEngine *fontEngine = graphics->GetFontEngine();
-
-	system->GetGame()->RenderBackgroundOnly(graphics);
+	system->GetGame()->RenderBackgroundOnly(system->GetGraphics());
 
 	const char *gameOverText = "Game Over";
-	int textWidth = fontEngine->CalculateTextWidth(gameOverText, FontEngine::FONT_TYPE_LARGE);
+	int textWidth = font_->CalculateTextWidth(gameOverText);
 	int textX = (800 - textWidth) / 2;
 	int textY = (600 - 48) / 2;
-	fontEngine->DrawText(gameOverText, textX, textY, 0xff00ffff, FontEngine::FONT_TYPE_LARGE);
+	font_->DrawText(gameOverText, textX, textY, 0xffffff00);
 }
 
 void GameOver::OnDeactivate(System *system)
 {
+	system->GetGraphics()->DestroyXFont(font_);
+	font_ = 0;
 }

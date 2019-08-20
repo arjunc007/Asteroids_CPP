@@ -3,10 +3,8 @@
 #include "Explosion.h"
 #include "Graphics.h"
 #include "Random.h"
-#include "ImmediateMode.h"
-#include "ImmediateModeVertex.h"
 
-Explosion::Explosion(const XMVECTOR& position, int size, float startSpeed) :
+Explosion::Explosion(const D3DXVECTOR3 &position, int size, float startSpeed) :
 	frameStartTime_(std::clock()),
 	activeTime_(0.f),
 	lastSpawnTime_(0.f)
@@ -18,13 +16,13 @@ Explosion::Explosion(const XMVECTOR& position, int size, float startSpeed) :
 
 	int numParticles = 50 + size * 5;
 
-	for (int i = 0; i < numParticles; i++)
+	for(int i = 0; i < numParticles; i++)
 	{
 		temp.time = 0.f;
-		temp.lifeTime = size + Random::GetFloat(2.f);
-		XMStoreFloat2(&temp.vel, startSpeed * XMVectorSet(Random::GetFloat(-1.f, 1.f), Random::GetFloat(-1.f, 1.f), 0.f, 0.f));
+		temp.lifeTime = size + Random::GetFloat(2.f); 
+		temp.vel = startSpeed * D3DXVECTOR2(Random::GetFloat(-1.f, 1.f), Random::GetFloat(-1.f, 1.f));
 		temp.pos.x = 0.f;
-		temp.pos.y = 0.f;
+		temp.pos.y = 0.f;// + 50 * D3DXVECTOR2(Random::GetFloat(-1.f, 1.f), Random::GetFloat(-1.f, 1.f));
 		particles_.push_back(temp);
 	}
 }
@@ -36,14 +34,14 @@ void Explosion::Update(System* system)
 	activeTime_ += deltaTime;
 
 	//Spawn 20 new particles every 0.2s
-	if (activeTime_ - lastSpawnTime_ > 0.2f)
+	if(activeTime_ - lastSpawnTime_ > 0.2f)
 	{
 		Particle temp;
-		for (int i = 0; i < 20; i++)
+		for(int i = 0; i < 20; i++)
 		{
 			temp.time = 0.f;
-			temp.lifeTime = Random::GetFloat(2.f);
-			XMStoreFloat2(&temp.vel, 3.f * XMVectorSet(Random::GetFloat(-1.f, 1.f), Random::GetFloat(-1.f, 1.f), 0.f, 0.f));
+			temp.lifeTime = Random::GetFloat(2.f); 
+			temp.vel = 3.f * D3DXVECTOR2(Random::GetFloat(-1.f, 1.f), Random::GetFloat(-1.f, 1.f));
 			temp.pos.x = temp.pos.y = 0.f;// + 50 * D3DXVECTOR2(Random::GetFloat(-1.f, 1.f), Random::GetFloat(-1.f, 1.f));
 			particles_.push_back(temp);
 		}
@@ -52,24 +50,22 @@ void Explosion::Update(System* system)
 
 
 	std::list<Particle>::iterator particleIt = particles_.begin();
-	while (particleIt != particles_.end())
+	while(particleIt != particles_.end())
 	{
-		if ((*particleIt).time > (*particleIt).lifeTime)
+		if((*particleIt).time > (*particleIt).lifeTime)
 		{
 			particleIt = particles_.erase(particleIt);
 		}
 		else
 		{
-			XMVECTOR newPos = XMLoadFloat2(&(*particleIt).pos);
-			newPos += XMLoadFloat2(&(*particleIt).vel) * activeTime_;
-			XMStoreFloat2(&(*particleIt).pos, newPos);
+			(*particleIt).pos += (*particleIt).vel * activeTime_;
 			(*particleIt).time += deltaTime;
 			++particleIt;
 
 		}
 	}
 
-	if (particles_.empty() || activeTime_ > 10.f)
+	if(particles_.empty() || activeTime_ > 10.f)
 	{
 		SetAlive(false);
 	}
@@ -78,15 +74,21 @@ void Explosion::Update(System* system)
 void Explosion::Render(Graphics* graphics) const
 {
 
-	if (!IsAlive())
+	if(!IsAlive())
 		return;
 
-	std::vector<ImmediateModeVertex> points;
-	ImmediateModeVertex point;
+	struct DummyVert
+	{
+		float x, y, z;
+		D3DCOLOR diffuse;
+	};
 
-	uint32_t baseColor(0xFFF54C0F);
+	std::vector<DummyVert> points;
+	DummyVert point;
 
-	for (auto particle : particles_)
+	D3DXCOLOR baseColor(0xFFF54C0F);
+
+	for(auto particle :particles_)
 	{
 		point.x = particle.pos.x;
 		point.y = particle.pos.y;
@@ -95,19 +97,25 @@ void Explosion::Render(Graphics* graphics) const
 		points.push_back(point);
 	}
 
-	XMVECTOR position = GetPosition();
-	XMMATRIX translationMatrix = XMMatrixTranslation(
-		XMVectorGetX(position),
-		XMVectorGetY(position),
-		XMVectorGetZ(position));
+	D3DXVECTOR3 position = GetPosition();
+	D3DXMATRIX explosionTransform;
+	D3DXMatrixTranslation(&explosionTransform,
+		position.x,
+		position.y,
+		position.z);
 
-	XMMATRIX shipTransform = translationMatrix;
+	D3DXMATRIX identityMatrix;
+	D3DXMatrixIdentity(&identityMatrix);
 
-	ImmediateMode* immediateGraphics = graphics->GetImmediateMode();
-
-	immediateGraphics->SetModelMatrix(shipTransform);
-	immediateGraphics->Draw(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
-		&points[0],
-		points.size());
-	immediateGraphics->SetModelMatrix(XMMatrixIdentity());
+	DWORD dummyFvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+	graphics->SetPointSize(2.f);
+		graphics->SetVertexFormat(dummyFvf);
+		graphics->DisableLighting();
+		graphics->SetModelMatrix(&explosionTransform);
+		graphics->DrawImmediate(D3DPT_POINTLIST,
+			points.size(),
+			&points[0],
+			sizeof(point));
+		graphics->SetModelMatrix(&identityMatrix);
+		graphics->EnableLighting();
 }

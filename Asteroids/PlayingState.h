@@ -2,6 +2,7 @@
 #define PLAYINGSTATE_H_INCLUDED
 
 #include "GameState.h"
+#include "Font.h"
 
 class PlayingState : public GameState
 {
@@ -17,6 +18,8 @@ public:
 private:
 
 	int level_;
+	Font* scoreFont_;
+	Font* popupFont_;
 
 };
 

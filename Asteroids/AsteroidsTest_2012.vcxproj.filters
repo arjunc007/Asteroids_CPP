@@ -19,12 +19,6 @@
     <Filter Include="Game\Collision">
       <UniqueIdentifier>{6a0821f5-5264-41be-b042-e624c66f300e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\Shaders">
-      <UniqueIdentifier>{1965bc53-78cf-4e4f-aa6a-9ad22aca7bbd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Graphics\Fonts">
-      <UniqueIdentifier>{b92f238f-c0be-430d-b271-867bcfacd543}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -66,6 +60,9 @@
     <ClCompile Include="StateLibrary.cpp">
       <Filter>Game\States</Filter>
     </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="Bullet.cpp">
       <Filter>Game</Filter>
     </ClCompile>
@@ -101,30 +98,6 @@
     </ClCompile>
     <ClCompile Include="Maths.cpp">
       <Filter>System</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourceLoader.cpp">
-      <Filter>System</Filter>
-    </ClCompile>
-    <ClCompile Include="VertexShader.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="PixelShader.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="DynamicVertexBuffers.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="MatrixBuffer.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="SpriteFontRenderer.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="ImmediateMode.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="FontEngine.cpp">
-      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="UFO.cpp">
       <Filter>Game</Filter>
@@ -166,6 +139,9 @@
     </ClInclude>
     <ClInclude Include="StateLibrary.h">
       <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Font.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Bullet.h">
       <Filter>Game</Filter>
@@ -209,67 +185,8 @@
     <ClInclude Include="AssetManager.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="ResourceLoader.h">
-      <Filter>System</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexShader.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="PixelShader.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="ImmediateModeVertex.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="DynamicVertexBuffers.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="MatrixBuffer.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="SpriteFontRenderer.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="SpriteFontVertex.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="ImmediateMode.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="FontEngine.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="UFO.h">
       <Filter>Game</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="VertexShader_FvfXyzDiffuse.hlsl">
-      <Filter>Graphics\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="PixelShader_FvfXyzDiffuse.hlsl">
-      <Filter>Graphics\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="PixelShader_SpriteFont.hlsl">
-      <Filter>Graphics\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="VertexShader_SpriteFont.hlsl">
-      <Filter>Graphics\Shaders</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Fonts\Arial_12.spritefont">
-      <Filter>Graphics\Fonts</Filter>
-    </None>
-    <None Include="Fonts\Arial_24.spritefont">
-      <Filter>Graphics\Fonts</Filter>
-    </None>
-    <None Include="Fonts\Arial_36.spritefont">
-      <Filter>Graphics\Fonts</Filter>
-    </None>
   </ItemGroup>
 </Project>

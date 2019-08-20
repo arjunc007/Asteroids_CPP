@@ -3,6 +3,8 @@
 
 #include "GameState.h"
 
+class Font;
+
 class LevelStart : public GameState
 {
 public:
@@ -16,6 +18,7 @@ public:
 private:
 	int level_;
 	int delay_;
+	Font *font_;
 };
 
 #endif // LEVELSTART_H_INCLUDE
