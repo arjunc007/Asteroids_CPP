@@ -371,40 +371,25 @@ void Game::UpdatePlayer(System *system)
 		}
 
 		Mouse::ButtonStateTracker tracker;
-		Mouse::State mouseState = system->GetMouse()->GetState();
+		Mouse::State mouseState = Mouse::Get().GetState();
 
 		tracker.Update(mouseState);
 
-		if (tracker.leftButton == ButtonState::PRESSED)
-		{
-			system->GetMouse()->SetMode(Mouse::MODE_RELATIVE);
-			system->GetMouse()->SetVisible(true);
-		}
-		else if (tracker.leftButton == ButtonState::RELEASED)
-		{
-			system->GetMouse()->SetMode(Mouse::MODE_ABSOLUTE);
-		}
+		/*XMFLOAT2 mouseDir = XMFLOAT2(mouseState.x - Maths::WrapModulo(XMVectorGetX(player_->GetPosition()), 0, 800), Maths::WrapModulo(mouseState.y - XMVectorGetY(player_->GetPosition()), 0, 600));
 
-		if (mouseState.positionMode == Mouse::MODE_RELATIVE)
+		XMStoreFloat2(&mouseDir, XMVector2Normalize(XMLoadFloat2(&mouseDir)));
+
+		float angle = XMVectorGetY(XMVector2AngleBetweenNormals(player_->GetForwardVector(), XMLoadFloat2(&mouseDir)));
+
+		float dir = XMVectorGetZ(XMVector3Cross(player_->GetForwardVector(), XMLoadFloat2(&mouseDir)));
+
+		if (angle > XMConvertToRadians(5.f))
 		{
-			if (mouseState.x > XMVectorGetX(player_->GetPosition()))
+			if(dir > 0.1f)
 				rotation = -1.0f;
-			else if(mouseState.x < XMVectorGetX(player_->GetPosition()))
+			else if(dir < 0.1f)
 				rotation = 1.0f;
-			/*XMVECTOR targetDir = XMVectorSet(float(mouseState.x) - XMVectorGetX(player_->GetPosition()) , float(mouseState.y) - XMVectorGetY(player_->GetPosition()), 0.f, 0.f);
-
-			float crossProductZ = XMVectorGetZ(XMVector3Cross(targetDir, player_->GetForwardVector()));
-			if (crossProductZ < 0)
-			{
-				rotation = -1;
-			}
-			else if (crossProductZ > 0)
-			{
-				rotation = 1;
-			}*/
-		}
-
-		//mouse->SetMode(mouse.leftButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
+		}*/
 
 		player_->SetControlInput(acceleration, rotation);
 		player_->Update(system);

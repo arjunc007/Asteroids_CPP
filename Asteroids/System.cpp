@@ -142,17 +142,16 @@ void System::ProcessMessageQueue()
 		case WM_KEYDOWN:
 			if (message.wParam == VK_ESCAPE)
 			{
+				Mouse::Get().SetMode(Mouse::MODE_ABSOLUTE);
 				quit_ = true;
 			}
 			break;
 		case WM_QUIT:
+			Mouse::Get().SetMode(Mouse::MODE_ABSOLUTE);
 			quit_ = true;
 			break;
 
 		case WM_ACTIVATEAPP:
-			Mouse::ProcessMessage(message.message, message.wParam, message.lParam);
-			break;
-
 		case WM_INPUT:
 		case WM_MOUSEMOVE:
 		case WM_LBUTTONDOWN:

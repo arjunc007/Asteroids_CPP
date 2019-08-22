@@ -22,10 +22,17 @@ void PlayingState::OnUpdate(System *system)
 {
 	Game *game = system->GetGame();
 	game->Update(system);
+
+	GameState::StateArgument arg;
+	arg.asInt = game->GetScore();
+
+	GameState::StateArgumentMap argMap;
+	argMap.insert(std::make_pair(std::string("CurrentScore"), arg));
+
 	if (game->IsGameOver())
 	{
 		game->ResetGame();
-		system->SetNextState("GameOver");
+		system->SetNextState(std::string("GameOver"), argMap);
 	}
 	else if (game->IsLevelComplete())
 	{

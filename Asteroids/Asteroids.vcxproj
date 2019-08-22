@@ -109,6 +109,7 @@
     <ClCompile Include="PlayingState.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
+    <ClCompile Include="ScoreBoard.cpp" />
     <ClCompile Include="Ship.cpp" />
     <ClCompile Include="SpriteFontRenderer.cpp" />
     <ClCompile Include="StateLibrary.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceLoader.h" />
+    <ClInclude Include="ScoreBoard.h" />
     <ClInclude Include="Ship.h" />
     <ClInclude Include="SpriteFontRenderer.h" />
     <ClInclude Include="SpriteFontVertex.h" />

@@ -129,6 +129,9 @@
     <ClCompile Include="UFO.cpp">
       <Filter>Game</Filter>
     </ClCompile>
+    <ClCompile Include="ScoreBoard.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainWindow.h">
@@ -241,6 +244,9 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="UFO.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="ScoreBoard.h">
       <Filter>Game</Filter>
     </ClInclude>
   </ItemGroup>
