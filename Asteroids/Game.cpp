@@ -133,6 +133,12 @@ void Game::RenderEverything(Graphics *graphics)
 	// XMVectorGetX(XMConvertVectorFloatToUInt(popup.color, 0))
 	for (auto popup : scorePopups_)
 		fontEngine->DrawText("+" + std::to_string(popup.value), popup.pos.x, popup.pos.y,0xff0000ff, FontEngine::FontType::FONT_TYPE_SMALL);
+
+	if (player_)
+	{
+		scoreText = "Lives: " + std::to_string(player_->GetNumLives());
+		fontEngine->DrawText(scoreText, 800 - 130, 600 - 48, 0xffffff00);
+	}
 }
 
 void Game::InitialiseLevel(int numAsteroids)
@@ -171,14 +177,15 @@ void Game::DoCollision(GameEntity *a, GameEntity *b)
 	if (player && asteroid)
 	{
 		AsteroidHit(asteroid);
-		player->SetAlive(false);
+
+		player->TakeLife();
 	}
 
 	if (player && enemy)
 	{
-		enemy->SetAlive(false);
+		enemy->TakeLife();
 		SpawnExplosionAt(enemy->GetPosition(), 3);
-		player->SetAlive(false);
+		player->TakeLife();
 		SpawnExplosionAt(player->GetPosition(), 3);
 	}
 
@@ -215,14 +222,14 @@ void Game::DoCollision(GameEntity *a, GameEntity *b)
 		}
 		if (enemy && bullet->GetOwner() == Player)
 		{
-			enemy->SetAlive(false);
+			enemy->TakeLife();
 			bullet->SetAlive(false);
 			SpawnExplosionAt(enemy->GetPosition(), 3);
 		}
 
 		if (player && bullet->GetOwner() == Enemy)
 		{
-			player->SetAlive(false);
+			player->TakeLife();
 			bullet->SetAlive(false);
 			SpawnExplosionAt(player->GetPosition(), 3);
 		}
@@ -331,8 +338,9 @@ void Game::SpawnPlayer()
 {
 	DeletePlayer();
 	player_ = new Ship();
-	player_->SetCooldown(1.f);
+	player_->SetCooldown(0.7f);
 	player_->EnableCollisions(collision_, 10.0f);
+	player_->SetNumLives(3);
 }
 
 void Game::DeletePlayer()
@@ -370,6 +378,22 @@ void Game::UpdatePlayer(System *system)
 			rotation = 1.0f;
 		}
 
+		if (keyboard->IsKeyPressed(0x31)) //1
+		{
+			player_->SetFireMode(Ship::FireMode::SINGLE);
+			player_->SetCooldown(0.7f);
+		}
+		else if (keyboard->IsKeyPressed(0x32)) //2
+		{
+			player_->SetFireMode(Ship::FireMode::SINGLE_FAST);
+			player_->SetCooldown(0.1f);
+		}
+		else if(keyboard->IsKeyPressed(0x33)) //3
+		{
+			player_->SetFireMode(Ship::FireMode::SCATTER);
+			player_->SetCooldown(1.0f);
+		}
+
 		Mouse::ButtonStateTracker tracker;
 		Mouse::State mouseState = Mouse::Get().GetState();
 
@@ -395,11 +419,29 @@ void Game::UpdatePlayer(System *system)
 		player_->Update(system);
 		WrapEntity(player_);
 
-		if ((keyboard->IsKeyPressed(VK_SPACE) || tracker.leftButton == ButtonState::PRESSED) && player_->ReadyToShoot())
+		if ((keyboard->IsKeyHeld(VK_SPACE) || tracker.leftButton == ButtonState::PRESSED) && player_->ReadyToShoot())
 		{
 			XMVECTOR playerForward = player_->GetForwardVector();
 			XMVECTOR bulletPosition = player_->GetPosition() + playerForward * 10.0f;
-			SpawnBullet(Owner::Player, bulletPosition, playerForward, 4.0f);
+
+			if (player_->GetFireMode() == Ship::FireMode::SCATTER)
+			{
+				XMVECTOR axis = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+				SpawnBullet(Owner::Player, bulletPosition, playerForward, 1.0f);
+				SpawnBullet(Owner::Player, bulletPosition, XMVector3Rotate(playerForward, XMQuaternionRotationAxis(axis, 5 * Maths::PI / 180)), 1.0f);
+				SpawnBullet(Owner::Player, bulletPosition, XMVector3Rotate(playerForward, XMQuaternionRotationAxis(axis, 10 * Maths::PI / 180)), 1.0f);
+				SpawnBullet(Owner::Player, bulletPosition, XMVector3Rotate(playerForward, XMQuaternionRotationAxis(axis, -5 * Maths::PI / 180)), 1.0f);
+				SpawnBullet(Owner::Player, bulletPosition, XMVector3Rotate(playerForward, XMQuaternionRotationAxis(axis, -10 * Maths::PI / 180)), 1.0f);
+			}
+			else if(player_->GetFireMode() == Ship::FireMode::SINGLE_FAST)
+			{
+				SpawnBullet(Owner::Player, bulletPosition, playerForward, 1.0f);
+			}
+			else
+			{
+				SpawnBullet(Owner::Player, bulletPosition, playerForward, 2.5f);
+			}
+
 			player_->DisableShooting();
 		}
 	}

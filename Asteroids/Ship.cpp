@@ -7,6 +7,7 @@
 #include <algorithm>
 
 Ship::Ship() :
+	lives_(1),
 	accelerationControl_(0.0f),
 	rotationControl_(0.0f),
 	velocity_(XMFLOAT3(0.0f, 0.0f, 0.0f)),
@@ -15,7 +16,8 @@ Ship::Ship() :
 	color_(XMVectorSet(1.f, 1.f, 1.f, 1.f)),
 	coolDown_(0.f),
 	lastShotTime_(std::clock()),
-	shotReady_(false)//**TODO: Candidate for crash
+	shotReady_(false),
+	fireMode_(FireMode::SINGLE)//**TODO: Candidate for crash
 {
 }
 
@@ -55,6 +57,28 @@ void Ship::Update(System *system)
 	XMVECTOR position = GetPosition();
 	position = XMVectorAdd(position, XMLoadFloat3(&velocity_));
 	SetPosition(position);
+}
+
+void Ship::SetNumLives(int lives)
+{
+	lives_ = lives;
+}
+
+int Ship::GetNumLives() const
+{
+	return lives_;
+}
+
+void Ship::TakeLife()
+{
+	if (--lives_ > 0)
+	{
+		Reset();
+	}
+	else
+	{
+		SetAlive(false);
+	}
 }
 
 void Ship::Render(Graphics *graphics) const
@@ -134,6 +158,16 @@ XMVECTOR Ship::GetVelocity() const
 	return XMLoadFloat3(&velocity_);
 }
 
+const Ship::FireMode Ship::GetFireMode() const
+{
+	return fireMode_;
+}
+
+void Ship::SetFireMode(FireMode fireMode)
+{
+	fireMode_ = fireMode;
+}
+
 bool Ship::ReadyToShoot() const
 {
 	return shotReady_;
@@ -160,6 +194,7 @@ void Ship::Reset()
 	accelerationControl_ = 0.0f;
 	rotationControl_ = 0.0f;
 
+	fireMode_ = FireMode::SINGLE;
 	velocity_ = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	forward_ = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	rotation_ = 0.0f;
